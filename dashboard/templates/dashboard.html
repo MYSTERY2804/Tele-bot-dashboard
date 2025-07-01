@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Bot Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: 600;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        .stats-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .user-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .conversation-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 1rem;
+            background: white;
+        }
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+        }
+        .message.user {
+            background: #e3f2fd;
+            margin-left: 2rem;
+        }
+        .message.bot {
+            background: #f3e5f5;
+            margin-right: 2rem;
+        }
+        .message-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .tab-content {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-dumbbell me-2"></i>Fitness Bot Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Main Content Tabs -->
+        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Users
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="conversation-tab" data-bs-toggle="tab" data-bs-target="#conversation" type="button" role="tab">
+                    <i class="fas fa-comments me-2"></i>Conversations
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">
+                    <i class="fas fa-credit-card me-2"></i>Payments
+                </button>
+            </li>
+        </ul>
+
+        <!-- Stats Cards -->
+        <div class="row mt-4 mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-number" id="total-users">-</div>
+                    <div class="stats-label">Total Users</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-success">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <div class="stats-number" id="total-workouts">-</div>
+                    <div class="stats-label">Total Workouts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-info">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stats-number" id="active-users">-</div>
+                    <div class="stats-label">Active Users (30d)</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon text-warning">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stats-number" id="total-messages">-</div>
+                    <div class="stats-label">Total Messages</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bars -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Workout Completion Rate</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" id="workout-progress" role="progressbar" style="width: 0%">
+                                <span id="workout-rate-text">0%</span>
+                </div>
+            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content mt-4">
+            <!-- Users Tab Content -->
+            <div class="tab-pane fade show active" id="users" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>User Management</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <input type="text" class="form-control" id="userSearch" placeholder="Search users..." style="max-width: 200px;">
+                        <select class="form-select" id="filterCompletion" style="max-width: 180px;">
+                            <option value="all">All Completion Rates</option>
+                            <option value="excellent">Excellent (80%+)</option>
+                            <option value="good">Good (60-79%)</option>
+                            <option value="attention">Needs Attention (40-59%)</option>
+                            <option value="poor">Poor (<40%)</option>
+                        </select>
+                        <select class="form-select" id="filterActivity" style="max-width: 150px;">
+                            <option value="all">All Activity</option>
+                            <option value="active">Active (30d)</option>
+                            <option value="inactive">Inactive (30d)</option>
+                        </select>
+                        <select class="form-select" id="filterFitness" style="max-width: 180px;">
+                            <option value="all">All Fitness Levels</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="usersTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Fitness Level</th>
+                                <th>Total Workouts</th>
+                                <th>Completed</th>
+                                <th>Overall Rate (%)</th>
+                                <th>Recent (30d)</th>
+                                <th>Avg Completion (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="8" class="text-center text-muted">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row mt-3" id="usersSummaryStats" style="display:none;">
+                    <div class="col-md-3"><div class="stats-card text-center"><div class="stats-label">Avg Completion Rate</div><div class="stats-number" id="avgCompletion">-</div></div></div>
+                    <div class="col-md-3"><div class="stats-card text-center"><div class="stats-label">Active Users (30d)</div><div class="stats-number" id="activeUsers30d">-</div></div></div>
+                    <div class="col-md-3"><div class="stats-card text-center"><div class="stats-label">Total Workouts</div><div class="stats-number" id="totalWorkoutsSummary">-</div></div></div>
+                    <div class="col-md-3"><div class="stats-card text-center"><div class="stats-label">Completed Workouts</div><div class="stats-number" id="completedWorkoutsSummary">-</div></div></div>
+                </div>
+            </div>
+
+            <!-- Conversation Tab Content -->
+            <div class="tab-pane fade" id="conversation" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5 class="mb-3">Select User</h5>
+                        <select class="form-select" id="conversationUserSelect">
+                            <option value="">Choose a user...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <h5 class="mb-3">Conversation History</h5>
+                        <div id="conversation-container" class="conversation-container">
+                            <div class="text-center text-muted">
+                                Select a user to view their conversation history
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Tab Content -->
+            <div class="tab-pane fade" id="payments" role="tabpanel">
+                <div class="text-center p-5">
+                    <i class="fas fa-credit-card fa-3x mb-3 text-muted"></i>
+                    <h5>Payments Coming Soon</h5>
+                    <p class="text-muted">Payment functionality will be available in a future update.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="userModalBody">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Personal Information</h6>
+                                    <p class="mb-1"><strong>Name:</strong> <span id="userName">-</span></p>
+                                    <p class="mb-1"><strong>Age:</strong> <span id="userAge">-</span></p>
+                                    <p class="mb-1"><strong>Height:</strong> <span id="userHeight">-</span> cm</p>
+                                    <p class="mb-1"><strong>Weight:</strong> <span id="userWeight">-</span> kg</p>
+                                    <p class="mb-1"><strong>Fitness Level:</strong> <span id="userFitnessLevel">-</span></p>
+                                    <p class="mb-1"><strong>Goals:</strong> <span id="userGoals">-</span></p>
+                                    <p class="mb-0"><strong>Member Since:</strong> <span id="userCreatedAt">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Progress Overview</h6>
+                                    <canvas id="userProgressChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Recent Workouts</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Progress</th>
+                                                    <th>Completion</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="userWorkoutsTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global variables
+        let currentUsers = [];
+        let currentUserDetails = null;
+        let userProgressChart = null;
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading stats:', data.error);
+                    return;
+                }
+                
+                // Update main stats
+                document.getElementById('total-users').textContent = data.total_users || 0;
+                document.getElementById('total-workouts').textContent = data.total_workouts || 0;
+                document.getElementById('active-users').textContent = data.active_users || 0;
+                document.getElementById('total-messages').textContent = data.total_messages || 0;
+                
+                // Update workout completion rate
+                const workoutRate = data.workout_completion_rate || 0;
+                document.getElementById('workout-progress').style.width = workoutRate + '%';
+                document.getElementById('workout-rate-text').textContent = workoutRate.toFixed(1) + '%';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load and display users
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading users:', data.error);
+                    return;
+                }
+                
+                currentUsers = data.users;
+                const tableBody = document.getElementById('usersTableBody');
+                tableBody.innerHTML = '';
+                
+                if (currentUsers.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No users found</td></tr>';
+                    return;
+                }
+                
+                currentUsers.forEach(user => {
+                    const row = document.createElement('tr');
+                    const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                    const overallRate = user.overall_completion_rate || 0;
+                    const avgRate = user.avg_completion_rate || 0;
+                    
+                    row.innerHTML = `
+                        <td>${name || 'N/A'}</td>
+                        <td>${user.age || 'N/A'}</td>
+                        <td>${user.fitness_level || 'N/A'}</td>
+                        <td>${user.total_workouts || 0}</td>
+                        <td>${user.completed_workouts || 0}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${getProgressBarClass(overallRate)}" 
+                                     role="progressbar" 
+                                     style="width: ${overallRate}%"
+                                     title="${overallRate.toFixed(1)}%">
+                                    ${overallRate.toFixed(1)}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>${user.recent_completed || 0}/${user.recent_workouts || 0}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${getProgressBarClass(avgRate)}" 
+                                     role="progressbar" 
+                                     style="width: ${avgRate}%"
+                                     title="${avgRate.toFixed(1)}%">
+                                    ${avgRate.toFixed(1)}%
+                                </div>
+                        </div>
+                        </td>
+                    `;
+                    
+                    // Add click handler for user details
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('click', () => showUserDetails(user.user_id));
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Update summary statistics
+                updateUsersSummary();
+                
+                // Populate fitness levels filter
+                populateFitnessLevels();
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Helper function to get progress bar class based on completion rate
+        function getProgressBarClass(rate) {
+            if (rate >= 80) return 'bg-success';
+            if (rate >= 60) return 'bg-info';
+            if (rate >= 40) return 'bg-warning';
+            return 'bg-danger';
+        }
+
+        // Populate fitness levels filter
+        function populateFitnessLevels() {
+            const levels = Array.from(new Set(currentUsers.map(u => u.fitness_level).filter(Boolean)));
+            const select = document.getElementById('filterFitness');
+            select.innerHTML = '<option value="all">All Fitness Levels</option>' +
+                levels.map(level => `<option value="${level}">${level}</option>`).join('');
+        }
+
+        // Filter users based on selected criteria
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const completionFilter = document.getElementById('filterCompletion').value;
+            const activityFilter = document.getElementById('filterActivity').value;
+            const fitnessFilter = document.getElementById('filterFitness').value;
+            
+            let filtered = currentUsers.filter(user => {
+                const name = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+                const overallRate = user.overall_completion_rate || 0;
+                
+                // Search filter
+                if (searchTerm && !name.includes(searchTerm)) {
+                    return false;
+                }
+                
+                // Completion rate filter
+                if (completionFilter !== 'all') {
+                    if (completionFilter === 'excellent' && overallRate < 80) return false;
+                    if (completionFilter === 'good' && (overallRate < 60 || overallRate >= 80)) return false;
+                    if (completionFilter === 'attention' && (overallRate < 40 || overallRate >= 60)) return false;
+                    if (completionFilter === 'poor' && overallRate >= 40) return false;
+                }
+                
+                // Activity filter
+                if (activityFilter !== 'all') {
+                    const isActive = (user.recent_workouts || 0) > 0;
+                    if (activityFilter === 'active' && !isActive) return false;
+                    if (activityFilter === 'inactive' && isActive) return false;
+                }
+                
+                // Fitness level filter
+                if (fitnessFilter !== 'all' && user.fitness_level !== fitnessFilter) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Re-render table with filtered users
+            const tableBody = document.getElementById('usersTableBody');
+            tableBody.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No users found matching the filters</td></tr>';
+                document.getElementById('usersSummaryStats').style.display = 'none';
+                return;
+            }
+            
+            filtered.forEach(user => {
+                const row = document.createElement('tr');
+                const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                const overallRate = user.overall_completion_rate || 0;
+                const avgRate = user.avg_completion_rate || 0;
+                
+                row.innerHTML = `
+                    <td>${name || 'N/A'}</td>
+                    <td>${user.age || 'N/A'}</td>
+                    <td>${user.fitness_level || 'N/A'}</td>
+                    <td>${user.total_workouts || 0}</td>
+                    <td>${user.completed_workouts || 0}</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${getProgressBarClass(overallRate)}" 
+                                 role="progressbar" 
+                                 style="width: ${overallRate}%"
+                                 title="${overallRate.toFixed(1)}%">
+                                ${overallRate.toFixed(1)}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>${user.recent_completed || 0}/${user.recent_workouts || 0}</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${getProgressBarClass(avgRate)}" 
+                                 role="progressbar" 
+                                 style="width: ${avgRate}%"
+                                 title="${avgRate.toFixed(1)}%">
+                                ${avgRate.toFixed(1)}%
+                            </div>
+                        </div>
+                    </td>
+                `;
+                
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', () => showUserDetails(user.user_id));
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Update summary with filtered users
+            currentUsers = filtered;
+            updateUsersSummary();
+        }
+
+        // Update users summary statistics
+        function updateUsersSummary() {
+            if (!currentUsers.length) return;
+            
+            const avgCompletion = currentUsers.reduce((sum, user) => sum + (user.overall_completion_rate || 0), 0) / currentUsers.length;
+            const activeUsers = currentUsers.filter(user => (user.recent_workouts || 0) > 0).length;
+            const totalWorkouts = currentUsers.reduce((sum, user) => sum + (user.total_workouts || 0), 0);
+            const completedWorkouts = currentUsers.reduce((sum, user) => sum + (user.completed_workouts || 0), 0);
+            
+            document.getElementById('avgCompletion').textContent = avgCompletion.toFixed(1) + '%';
+            document.getElementById('activeUsers30d').textContent = activeUsers;
+            document.getElementById('totalWorkoutsSummary').textContent = totalWorkouts;
+            document.getElementById('completedWorkoutsSummary').textContent = completedWorkouts;
+            
+            document.getElementById('usersSummaryStats').style.display = 'flex';
+        }
+
+        // Show user details with charts
+        async function showUserDetails(userId) {
+            try {
+                const response = await fetch(`/api/user/${userId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading user details:', data.error);
+                    return;
+                }
+                
+                currentUserDetails = data;
+                const user = data.user;
+                
+                // Update user info
+                document.getElementById('userName').textContent = `${user.first_name || ''} ${user.last_name || ''}`;
+                document.getElementById('userAge').textContent = user.age || 'N/A';
+                document.getElementById('userHeight').textContent = user.height || 'N/A';
+                document.getElementById('userWeight').textContent = user.weight || 'N/A';
+                document.getElementById('userFitnessLevel').textContent = user.fitness_level || 'N/A';
+                document.getElementById('userGoals').textContent = user.goals || 'N/A';
+                document.getElementById('userCreatedAt').textContent = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+                
+                // Update workouts table
+                const workoutsTable = document.getElementById('userWorkoutsTable');
+                workoutsTable.innerHTML = '';
+                
+                if (data.workouts && data.workouts.length > 0) {
+                    data.workouts.forEach(workout => {
+                        const completion = workout.total_exercises > 0 
+                            ? ((workout.exercises_completed / workout.total_exercises) * 100).toFixed(1)
+                            : 0;
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${new Date(workout.created_date).toLocaleDateString()}</td>
+                            <td><span class="badge bg-${workout.status === 'completed' ? 'success' : 'warning'}">${workout.status}</span></td>
+                            <td>${workout.exercises_completed}/${workout.total_exercises}</td>
+                            <td>${completion}%</td>
+                        `;
+                        workoutsTable.appendChild(row);
+                    });
+                } else {
+                    workoutsTable.innerHTML = '<tr><td colspan="4" class="text-center">No workouts found</td></tr>';
+                }
+                
+                // Update progress chart
+                const ctx = document.getElementById('userProgressChart').getContext('2d');
+                if (userProgressChart) {
+                    userProgressChart.destroy();
+                }
+                
+                const workoutDates = data.workouts.map(w => new Date(w.created_date).toLocaleDateString());
+                const completionRates = data.workouts.map(w => 
+                    w.total_exercises > 0 ? ((w.exercises_completed / w.total_exercises) * 100) : 0
+                );
+                
+                userProgressChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: workoutDates,
+                        datasets: [{
+                            label: 'Workout Completion Rate (%)',
+                            data: completionRates,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('userModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error showing user details:', error);
+            }
+        }
+
+        // Load users for conversation dropdown
+        async function loadConversationUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading users:', data.error);
+                    return;
+                }
+                
+                const select = document.getElementById('conversationUserSelect');
+                select.innerHTML = '<option value="">Choose a user...</option>';
+                
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.user_id;
+                    option.textContent = `${user.first_name || ''} ${user.last_name || ''} (${user.user_id})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading conversation users:', error);
+            }
+        }
+
+        // Load conversation for selected user
+        async function loadConversation(userId) {
+            try {
+                const response = await fetch(`/api/conversation/${userId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading conversation:', data.error);
+                    return;
+                }
+                
+                const container = document.getElementById('conversation-container');
+                container.innerHTML = '';
+                
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(message => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `message ${message.message_type}`;
+                        messageDiv.innerHTML = `
+                            <div class="message-content">${message.message_text}</div>
+                            <div class="message-time">${new Date(message.timestamp).toLocaleString()}</div>
+                        `;
+                        container.appendChild(messageDiv);
+                    });
+                    
+                    container.scrollTop = container.scrollHeight;
+                } else {
+                    container.innerHTML = '<div class="text-center text-muted">No messages found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadUsers();
+            loadConversationUsers();
+            
+            // Set up conversation user select
+            document.getElementById('conversationUserSelect').addEventListener('change', function(e) {
+                if (e.target.value) {
+                    loadConversation(e.target.value);
+                }
+            });
+            
+            // Set up filters
+            document.getElementById('filterCompletion').addEventListener('change', filterUsers);
+            document.getElementById('filterActivity').addEventListener('change', filterUsers);
+            document.getElementById('filterFitness').addEventListener('change', filterUsers);
+            document.getElementById('userSearch').addEventListener('input', filterUsers);
+            
+            // Refresh stats every 30 seconds
+            setInterval(loadStats, 30000);
+        });
+    </script>
+</body>
+</html> 

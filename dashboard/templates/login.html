@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Fitness Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        .form-signin {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            margin: auto;
+        }
+        .form-signin .form-floating:focus-within {
+            z-index: 2;
+        }
+        .form-signin input[type="text"],
+        .form-signin input[type="email"] {
+            margin-bottom: -1px;
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .form-signin input[type="password"] {
+            margin-bottom: 10px;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+        .login-type-toggle {
+            margin-bottom: 20px;
+        }
+        .btn-toggle {
+            padding: 8px 16px;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            color: #6c757d;
+        }
+        .btn-toggle.active {
+            background-color: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+        .alert {
+            margin-bottom: 20px;
+        }
+        .login-help {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <main class="form-signin text-center">
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="logo">
+                <i class="fas fa-dumbbell text-primary"></i>
+            </div>
+            <h1 class="h3 mb-3 fw-normal">Fitness Platform</h1>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="login-type-toggle btn-group w-100 mb-3">
+                <button type="button" class="btn btn-toggle active" data-type="user" onclick="toggleLoginType('user')">
+                    <i class="fas fa-user"></i> User Login
+                </button>
+                <button type="button" class="btn btn-toggle" data-type="admin" onclick="toggleLoginType('admin')">
+                    <i class="fas fa-user-shield"></i> Admin Login
+                </button>
+            </div>
+
+            <input type="hidden" name="login_type" id="login_type" value="user">
+
+            <div class="form-floating">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username or Email" required>
+                <label for="username" id="username_label">Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                <label for="password">Password</label>
+            </div>
+
+            <button class="w-100 btn btn-lg btn-primary mb-3" type="submit">
+                <i class="fas fa-sign-in-alt"></i> Sign in
+            </button>
+            
+            <div class="login-help" id="login_help">
+                <h6 class="mb-2">Login Help</h6>
+                <p class="mb-2"><strong>For Users:</strong></p>
+                <ul class="text-start mb-3">
+                    <li>Username: <b>your firstname (all lowercase)</b></li>
+                    <li>Password: <b>your firstname + 123 (all lowercase)</b></li>
+                    <li>Example: <b>raj / raj123</b></li>
+                </ul>
+                <p class="mb-0"><small>Don't have an account? Contact your trainer.</small></p>
+            </div>
+            <div class="mt-4 text-center">
+                <a href="/new_user_dashboard" class="btn btn-outline-primary" style="min-width:260px; font-weight:600;">New User? Explore & Get Started</a>
+            </div>
+        </form>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleLoginType(type) {
+            // Update hidden input
+            document.getElementById('login_type').value = type;
+            
+            // Update button states
+            document.querySelectorAll('.btn-toggle').forEach(btn => {
+                if (btn.getAttribute('data-type') === type) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update form labels and help text
+            const usernameLabel = document.getElementById('username_label');
+            const loginHelp = document.getElementById('login_help');
+            
+            if (type === 'admin') {
+                usernameLabel.textContent = 'Username';
+                loginHelp.innerHTML = `
+                    <h6 class="mb-2">Admin Login</h6>
+                    <p class="mb-2"><strong>Default Credentials:</strong></p>
+                    <ul class="text-start mb-0">
+                        <li>Username: <b>admin</b></li>
+                        <li>Password: <b>admin123</b></li>
+                    </ul>
+                `;
+            } else {
+                usernameLabel.textContent = 'Username';
+                loginHelp.innerHTML = `
+                    <h6 class="mb-2">Login Help</h6>
+                    <p class="mb-2"><strong>For Users:</strong></p>
+                    <ul class="text-start mb-3">
+                        <li>Username: <b>your firstname (all lowercase)</b></li>
+                        <li>Password: <b>your firstname + 123 (all lowercase)</b></li>
+                        <li>Example: <b>raj / raj123</b></li>
+                    </ul>
+                    <p class="mb-0"><small>Don't have an account? Contact your trainer.</small></p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 
